@@ -21,7 +21,7 @@
         "listFiles": true,
         "locale": "en-us",
         //"mapRoot": null,
-        "module": "commonjs",
+        "module": "umd",
         //"moduleResolution": "classic",
         "newLine": "LF",
         "noEmit": false,
