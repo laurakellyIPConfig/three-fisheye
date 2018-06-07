@@ -1,4 +1,3 @@
-/// <reference types="three" />
 import * as THREE from "three";
 import { Fisheye, Radian } from "./Fisheye";
 export interface CameraConfig {
@@ -8,7 +7,7 @@ export interface CameraConfig {
 }
 export declare type Pixel = number;
 /**
- * 画像上の魚眼円の位置と大きさ
+ * Position and size of the fisheye circle on the image
  */
 export interface FishEyeRegion {
     centerX: Pixel;
@@ -16,41 +15,42 @@ export interface FishEyeRegion {
     radius: Pixel;
 }
 /**
- * 注視点の向き、単位
+ * Gaze point direction, unit
  */
 export interface DirectionOfView {
     pitch: Radian;
     yaw: Radian;
 }
 /**
- * 魚眼cnvを透視投影に変換する
- * ソースとなる cnv を動的に変えることができる、再利用可能な gl renderer
+ * Convert fish eye cnv to perspective projection
+ * A reusable gl renderer that can dynamically change the source cnv
  * @example
  * ```js
- * // ライフサイクル
+ * // life cycle
  * const a = new FisheyeCanvas2PerspectiveRenderer();
- * a.changeSource(video);         // 魚眼ソース指定
- * a.updateFisheyeRegion(region); // 魚眼ソースからクリッピングする領域を指定
- * a.setCanvasSize(size);         // 出力 canvas サイズを指定
- * a.setCameraPose(pose);         // カメラの向きを指定
- * a.render();                    // 描画
- * document.body.append(a.canvas); // 結果表示
+ * a.changeSource(video);         // Fisheye source specification
+ * a.updateFisheyeRegion(region); // Specify the region to be clipped from the fisheye source
+ * a.setCanvasSize(size);         // Specify output canvas size
+ * a.setCameraPose(pose);         // Specify camera orientation
+ * a.render();                    // drawing
+ * document.body.append(a.canvas); // Result display
+
  * ```
  */
 export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     /**
-     * ソース魚眼をクリッピングしたテクスチャ
+     * Texture clipping source fish eye
      */
     readonly texctx1: CanvasRenderingContext2D;
     readonly texctx2: CanvasRenderingContext2D;
     /**
-     * 描画モード
-     * true - テクスチャ&ポリゴン削減モード
-     * false - naive モード
+     * Drawing mode
+     * true - Texture & polygon reduction mode
+     * false - naive mode
      */
     readonly sep_mode: boolean;
     readonly collisionSphere: THREE.Mesh;
-    /** load 前 === src 変更前に書き換えてね */
+    /** Before load === rewrite before src change */
     mesh_num: number;
     private meshes;
     private texis;
@@ -67,8 +67,8 @@ export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera
     });
     destructor(): void;
     /**
-     * 描画する
-     * needsUpdate して render
+     * draw
+     * needsUpdate to render
      */
     render(): void;
     pitch: Radian;
@@ -77,16 +77,16 @@ export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera
     cameraPose: DirectionOfView;
     zoom: number;
     /**
-     * 画面情報
+     * Screen information
      */
     config: CameraConfig;
     protected updateFisheyeRegion(): void;
     /**
-   * 以前のリソースを消す
-   */
+     * Erase previous resources
+     */
     protected unload(): void;
     /**
-     * リソースの置き換え
+     * Resource replacement
      */
     protected load(): void;
     drag(type: "start" | "move", offsetX: number, offsetY: number): void;

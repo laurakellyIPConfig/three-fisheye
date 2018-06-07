@@ -1,4 +1,3 @@
-/// <reference types="three" />
 import * as THREE from "three";
 import { Fisheye } from "./Fisheye";
 /**

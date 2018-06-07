@@ -54,7 +54,7 @@ export class Equirectangular2Fisheye extends Fisheye<THREE.OrthographicCamera> {
   }
   protected unload(): void {
     this.meshes.forEach((mesh)=>{
-      this.scene.remove( mesh );
+      this.scene.remove(mesh);
       mesh.geometry.dispose();
       mesh.material.dispose();
     });

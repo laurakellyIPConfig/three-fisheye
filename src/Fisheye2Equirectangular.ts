@@ -29,8 +29,8 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
   protected load(): void {
     const source = this.src;
     if(source == null){ return; }
-    this.unload(); // 以前のパノラマを消す
-    // 現在のレンダラを現在のピクセルサイズに最適化する
+    this.unload(); // Erase previous panoramas
+    // Optimize the current renderer to the current pixel size
     this.resize();
     const tex = new THREE.Texture(this.texctx.canvas);
     const mesh = createPanoramaMesh(tex);
@@ -65,41 +65,42 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
 
 
 export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0, R2_ratio=1){
-  // 正方形テクスチャを仮定
-  //const panorama_width = 400; パノラマ板ポリの空間上の横幅、デフォルトはR2の円周の長さ
-  //const R1_ratio = 0; // 扇型の下弦 0~1
-  //const R2_ratio = 1; // 扇型の上弦 0~1 下弦 < 上弦
+  // Assume a square texture
+  //const panorama_width = 400; Panorama board Polar width in space, default is R2 circumference length
+  //const R1_ratio = 0; // Fan-shaped lower quarter 0 - 1
+  //const R2_ratio = 1; // Fan shaped upper quarter 0 - 1 lower string <upper string
   const {width, height} = (()=>{
-    // fisheye -> panorama のパノラマのw/hアスペクト比を計算
+    // fisheye -> panorama
+    // Calculate w / h aspect ratio of panorama of
     const {width, height} = fisheye_texture.image;
-    const [Hs, Ws] = [width, height]; // fisheye 画像短径
-    const [Cx, Cy] = [Ws/2, Hs/2]; // fisheye 中心座標
-    const R = Hs/2; // 中心座標からの半径
-    const [R1, R2] = [R*R1_ratio, R*R2_ratio]; // fisheye から ドーナッツ状に切り取る領域を決める半径二つ
-    const [Wd, Hd] = [(R2 + R1)*Math.PI, R2 - R1] // ドーナッツ状に切り取った領域を短径に変換した大きさ
+    const [Hs, Ws] = [width, height]; // fisheye Image Short Diameter    
+    const [Cx, Cy] = [Ws/2, Hs/2]; // fisheye Central coordinates
+    const R = Hs/2; // Radius from center coordinates
+    const [R1, R2] = [R*R1_ratio, R*R2_ratio]; // fisheye Two radii determining the area to cut out in a donut shape from
+    const [Wd, Hd] = [(R2 + R1)*Math.PI, R2 - R1] // The size obtained by converting the donut-shaped region into a short diameter
     return {height:Hd, width:Wd};
   })();
   const h_per_w_ratio = height/width;
-  // panorama_width の デフォルト値設定
+  // Set default value of panorama_width
   if(panorama_width <= 0){
     panorama_width = width;
   }
   const plane = new THREE.PlaneGeometry(panorama_width, panorama_width*h_per_w_ratio, 32, 32);
   const {vertices, faces, faceVertexUvs} = plane;
-  // UVを扇型に変換
-  const [Hs, Ws] = [1, 1]; // UV のサイズ
-  const [Cx, Cy] = [Ws/2, Hs/2]; // UV の中心座標
-  const R = Hs/2; // 中心座標からの半径
-  const [R1, R2] = [R*R1_ratio, R*R2_ratio]; // UV からドーナッツ状に切り取る領域を決める半径二つ
-  const [Wd, Hd] = [1, 1] // ドーナッツ状に切り取った領域を短径に変換した大きさ
+  // Convert UV to fan type
+  const [Hs, Ws] = [1, 1]; // Size of UV
+  const [Cx, Cy] = [Ws/2, Hs/2]; // Center coordinates of UV  
+  const R = Hs/2; // Radius from center coordinates  
+  const [R1, R2] = [R*R1_ratio, R*R2_ratio]; // Radius determining the region to cut out from the UV in a donut shape
+  const [Wd, Hd] = [1, 1] // The size obtained by converting the donut-shaped region into a short diameter
   faceVertexUvs[0] = faceVertexUvs[0].map((pt2Dx3)=>{
     return pt2Dx3.map(({x, y})=>{
       const [xD, yD] = [x, y];
-      // x, y ∈ [0, 1] は正方形に正規化された PlaneGeometry 上のUV座標
-      // たとえば (x,y) = (0, 0) は PlaneGeometry 左上座標。
-      // この(x,y)座標が表示すべき(魚眼)テクスチャ座標を返せば良い。
-      // 今回はテクスチャが魚眼画像なので UV座標(0,0) が表示すべきテクスチャ座標は オイラー座標で (0,0)、直交座標では(cx,cy)になる。
-      // PlaneGeometry 上のあるピクセルはテクスチャ上のどの位置を表示(写像)しなければいけないかを考える。
+      // x, y ∈ [0, 1] is the UV coordinate on the PlaneGeometry normalized to a square
+      // For example, (x, y) = (0, 0) is the PlaneGeometry upper left coordinate.
+      // This (x, y) coordinates should return the (fisheye) texture coordinates that should be displayed.
+      // Since the texture is a fisheye image this time, the texture coordinates to be displayed by the UV coordinates (0,0) are (0, 0) in Euler coordinates and (cx, cy) in orthogonal coordinates.
+      // Consider which position on the texture should be displayed (mapped) for a certain pixel on Plane Geometry.
       const r = (yD/Hd)*(R2-R1) + R1;
       const theta = (xD/Wd)*2.0*Math.PI;
       const xS = Cx + r*Math.sin(theta);
@@ -110,9 +111,9 @@ export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0
   });
   const mat = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, map: fisheye_texture } );
   const mesh = new THREE.Mesh(plane, mat);
-  mesh.rotation.x = Math.PI; // 北緯側の半球になるように回転
-  mesh.rotation.y = Math.PI; // こっちむいてベイビー
-  mesh.position.z = -panorama_width; // カメラからの距離
+  mesh.rotation.x = Math.PI; // Rotate to be a hemisphere on the north latitude side
+  mesh.rotation.y = Math.PI; // Peeled baby here  
+  mesh.position.z = -panorama_width; // Distance from camera
   return mesh;
 }
 

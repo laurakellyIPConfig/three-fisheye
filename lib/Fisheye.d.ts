@@ -1,4 +1,3 @@
-/// <reference types="three" />
 import * as THREE from "three";
 export declare abstract class Fisheye<Camera extends THREE.Camera> {
     /**
@@ -14,19 +13,19 @@ export declare abstract class Fisheye<Camera extends THREE.Camera> {
     private skybox;
     private skyboxtex;
     /**
-     * ソース魚眼をクリッピングしたテクスチャ
+     * Texture clipping source fish eye
      */
     readonly texctx: CanvasRenderingContext2D;
-    /** 変換元の魚眼 */
+    /** Fish eye of conversion source */
     private source;
-    /** 2のn乗になるテクスチャの大きさのnの値 */
+    /** The value of n of the size of the texture which becomes 2 n */
     private exponent;
     /**
-     * 2のn乗になるテクスチャの大きさのnの値
-     * 書き換えたら this.resize(); すること
+     * The value of n of the size of the texture which becomes 2 n
+     * When rewriting this.resize (); doing
      */
     defaultExponent: number | null;
-    /** 正方形テクスチャから切り取る領域 */
+    /** Area cut from square texture */
     protected region: {
         centerX: number;
         centerY: number;
@@ -47,14 +46,14 @@ export declare abstract class Fisheye<Camera extends THREE.Camera> {
         debug?: boolean;
     });
     /**
-     * @param source - 変換元の魚眼何かを変更
+     * @param source - Change fish eye of conversion source Change something
      */
     src: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | null;
     centerX: number;
     centerY: number;
     radius: number;
     /**
-     * 魚眼の円の位置を調整する
+     * Adjust the position of the fish eye circle
      */
     fisheyeRegion: {
         centerX: number;
@@ -64,7 +63,7 @@ export declare abstract class Fisheye<Camera extends THREE.Camera> {
     width: number;
     height: number;
     /**
-     * 現在のレンダラを現在のピクセルサイズに最適化する
+     * Optimize the current renderer to the current pixel size
      */
     canvasSize: {
         width: number;
@@ -76,54 +75,54 @@ export declare abstract class Fisheye<Camera extends THREE.Camera> {
     protected abstract load(): void;
     protected abstract unload(): void;
     /**
-     * cam.src の size にテクスチャを合わせる
+     * Fit texture to size of cam.src
      */
     resize(): void;
     /**
-   * 魚眼クリッピング領域の計算
-   */
+     * Calculation of fisheye clipping region
+     */
     protected updateFisheyeRegion(): void;
 }
 export declare function load_skybox_texture(path?: string): Promise<THREE.CubeTexture>;
 export declare function createSkyboxMesh(skybox_texture: THREE.CubeTexture): THREE.Mesh;
 /**
- * 半径 1 の球体を想定
- * @param longitude - 経度 rad
- * @param latitude - 緯度 rad
+ * Assume a sphere with radius 1
+ * @param longitude - Longitude rad
+ * @param latitude - Latitude rad
  * @return [x, y]
  */
 export declare function sphere2Mercator(longitude: Radian, latitude: Radian): [number, number];
 /**
- * 半径 1 の球体を想定
+ * Assume a sphere with radius 1
  * @param x
  * @param y
  * @return [longitude, latitude]
  */
 export declare function mercator2Sphere(x: number, y: number): [Radian, Radian];
 /**
- * 縦横 2 の正方形な魚眼画像から
- * 半径 1 の上半球極座標へ射影(up)
+ * From a square fisheye image of vertical and horizontal 2
+ * Projection (up) to upper hemispherical polar coordinates with radius 1
  * @param x ∈ [-1, 1]
  * @param y ∈ [-1, 1]
  * @return [longitude, latitude] - Spherical coordinates
  */
 export declare function fisheye2Sphere(x: number, y: number, r?: number): [Radian, Radian] | null;
 /**
- * 半径 1 の上半球極座標から
- * 縦横 2 の原点を中心とした正方形座標へ射影(down)
+ * From the upper hemispherical polar coordinate with radius 1
+ * Projection (down) to square coordinates centered on the origin of vertical and horizontal 2
  * @param longitude - Spherical coordinates
  * @param latitude - Spherical coordinates
  * @return [x, y] ∈ [-1, 1]
  */
 export declare function sphere2Fisheye(longitude: Radian, latitude: Radian, r?: number): [number, number];
 /**
- * @param alpha - 右手座標系 z 軸こっち向いて左まわり Euler angles
- * @param beta - 右手座標系 x 軸こっち向いて左まわり Euler angles
- * @param gamma - 右手座標系 y 軸こっち向いて左まわり Euler angles
+ * @param alpha - Right-handed coordinate system z axis Left turning around here Euler angles
+ * @param beta - Right hand coordinate system x axis Around left and left Euler angles
+ * @param gamma - Right hand coordinate system y axis Around left and left Euler angles
  */
 export declare function rotate(alpha: Radian, beta: Radian, gamma: Radian): void;
 export declare type Radian = number;
 /**
- * 円筒テクスチャを魚眼画像に変換するときに使う。
+ * Used to convert cylindrical texture to fisheye image.
  */
 export declare function fisheye2equirectangular(x: number, y: number): [number, number];

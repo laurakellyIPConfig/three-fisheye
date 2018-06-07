@@ -25,7 +25,7 @@ QUnit.test("mercator2Sphere, sphere2Mercator", async (assert: Assert)=>{
 });
 
 
-QUnit.test("Fisheye2Perspective", async (assert: Assert)=>{
+/*QUnit.test("Fisheye2Perspective", async (assert: Assert)=>{
   const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: {
@@ -94,7 +94,7 @@ QUnit.test("Fisheye2Perspective", async (assert: Assert)=>{
   stream.getTracks().forEach((a)=>{ a.stop(); });
 
   assert.ok(true);
-});
+});*/
 
 
 QUnit.test("Fisheye2Equirectangular", async (assert: Assert)=>{

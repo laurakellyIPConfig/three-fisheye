@@ -19,19 +19,19 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
   private skyboxtex: THREE.CubeTexture;
 
   /**
-   * ソース魚眼をクリッピングしたテクスチャ
+   * Texture clipping source fish eye
    */
   public readonly texctx: CanvasRenderingContext2D;
-  /** 変換元の魚眼 */
+  /** Fish eye of conversion source */
   private source: HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|null;
-  /** 2のn乗になるテクスチャの大きさのnの値 */
+  /** The value of n of the size of the texture which becomes 2 n */
   private exponent: number;
   /**
-   * 2のn乗になるテクスチャの大きさのnの値
-   * 書き換えたら this.resize(); すること
+   * The value of n of the size of the texture which becomes 2 n
+   * When rewriting this.resize (); doing
    */
   public defaultExponent: number | null;
-  /** 正方形テクスチャから切り取る領域 */
+  /** Area cut from square texture */
   protected region: { centerX: number; centerY: number; radius: number; };
   /**
    * ```js
@@ -91,7 +91,7 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
 
 
   /**
-   * @param source - 変換元の魚眼何かを変更
+   * @param source - Change fish eye of conversion source Change something
    */
   public set src(source: HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|null) {
     if(source == null){ return; }
@@ -126,7 +126,7 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
     return this.region.radius;
   }
   /**
-   * 魚眼の円の位置を調整する
+   * Adjust the position of the fish eye circle
    */
   public set fisheyeRegion(prop: { centerX: number; centerY: number; radius: number; }) {
     this.region = prop;
@@ -140,10 +140,10 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
   public set height(n: number){ this.canvasSize = {width: this.canvasSize.width, height: n}; }
   public get height(): number{ return this.canvasSize.height; }
   /**
-   * 現在のレンダラを現在のピクセルサイズに最適化する
+   * Optimize the current renderer to the current pixel size
    */
   public set canvasSize(size: {width: number, height: number} ) {
-    // 現在のレンダラを現在のピクセルサイズに最適化する
+    // Optimize the current renderer to the current pixel size
     this.renderer.setSize(size.width, size.height);
     if(this.camera instanceof THREE.PerspectiveCamera){
       this.camera.aspect = size.width/size.height;
@@ -168,7 +168,7 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
 
 
   /**
-   * cam.src の size にテクスチャを合わせる
+   * Fit texture to size of cam.src
    */
   public resize(): void {
     const source = this.source;
@@ -184,16 +184,16 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
 
     const size = Math.min(width, height);
     if(this.defaultExponent == null){
-      for(var i=0; size > Math.pow(2, i); i++){} // 2^n の大きさを得る
-      this.exponent = i; // ターゲット解像度
+      for(var i=0; size > Math.pow(2, i); i++){} // Gain 2 ^ n size      
+      this.exponent = i; // Target resolution      
     }else{
       this.exponent = this.defaultExponent;
     }
     this.updateFisheyeRegion();
   }
 
-    /**
-   * 魚眼クリッピング領域の計算
+  /**
+   * Calculation of fisheye clipping region
    */
   protected updateFisheyeRegion() {
     const pow = Math.pow(2, this.exponent);
@@ -206,8 +206,8 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
     let [sx, sy] = [left, top];
     let [sw, sh] = [clippedWidth, clippedHeight];
     let [dx, dy] = [0, 0];
-    let [dw, dh] = [pow, pow]; // 縮小先の大きさ
-    // ネガティブマージン 対応
+    let [dw, dh] = [pow, pow]; // Size of reduction destination
+    // Negative margin supported
     if(left < 0){
       sx = 0;
       sw = clippedWidth - left;
@@ -221,7 +221,7 @@ export abstract class Fisheye<Camera extends THREE.Camera>{
       dh = sh*pow/clippedHeight;
     }
     this.pos = [sx, sy, sw, sh, dx, dy, dw, dh];
-    // 2^nな縮拡先の大きさ
+    // The size of 2 ^ n contracted extensions
     this.texctx.canvas.width  = pow;
     this.texctx.canvas.height = pow;
   }
@@ -261,9 +261,9 @@ export function createSkyboxMesh(skybox_texture: THREE.CubeTexture): THREE.Mesh 
 }
 
 /**
- * 半径 1 の球体を想定
- * @param longitude - 経度 rad
- * @param latitude - 緯度 rad
+ * Assume a sphere with radius 1
+ * @param longitude - Longitude rad
+ * @param latitude - Latitude rad
  * @return [x, y]
  */
 export function sphere2Mercator(longitude: Radian, latitude: Radian): [number, number]{
@@ -272,7 +272,7 @@ export function sphere2Mercator(longitude: Radian, latitude: Radian): [number, n
   return [x, y];
 }
 /**
- * 半径 1 の球体を想定
+ * Assume a sphere with radius 1
  * @param x
  * @param y
  * @return [longitude, latitude]
@@ -284,8 +284,8 @@ export function mercator2Sphere(x: number, y: number): [Radian, Radian]{
 }
 
 /**
- * 縦横 2 の正方形な魚眼画像から
- * 半径 1 の上半球極座標へ射影(up)
+ * From a square fisheye image of vertical and horizontal 2
+ * Projection (up) to upper hemispherical polar coordinates with radius 1
  * @param x ∈ [-1, 1]
  * @param y ∈ [-1, 1]
  * @return [longitude, latitude] - Spherical coordinates
@@ -300,8 +300,8 @@ export function fisheye2Sphere(x: number, y: number, r=1): [Radian, Radian] | nu
 }
 
 /**
- * 半径 1 の上半球極座標から
- * 縦横 2 の原点を中心とした正方形座標へ射影(down)
+ * From the upper hemispherical polar coordinate with radius 1
+ * Projection (down) to square coordinates centered on the origin of vertical and horizontal 2
  * @param longitude - Spherical coordinates
  * @param latitude - Spherical coordinates
  * @return [x, y] ∈ [-1, 1]
@@ -313,9 +313,9 @@ export function sphere2Fisheye(longitude: Radian, latitude: Radian, r=1): [numbe
 }
 
 /**
- * @param alpha - 右手座標系 z 軸こっち向いて左まわり Euler angles
- * @param beta - 右手座標系 x 軸こっち向いて左まわり Euler angles
- * @param gamma - 右手座標系 y 軸こっち向いて左まわり Euler angles
+ * @param alpha - Right-handed coordinate system z axis Left turning around here Euler angles
+ * @param beta - Right hand coordinate system x axis Around left and left Euler angles
+ * @param gamma - Right hand coordinate system y axis Around left and left Euler angles
  */
 export function rotate(alpha: Radian, beta: Radian, gamma: Radian){
 
@@ -323,7 +323,7 @@ export function rotate(alpha: Radian, beta: Radian, gamma: Radian){
 export type Radian    = number;
 
 /**
- * 円筒テクスチャを魚眼画像に変換するときに使う。
+ * Used to convert cylindrical texture to fisheye image.
  */
 export function fisheye2equirectangular(x: number, y: number): [number, number] {
   const [w, h] = [1, 1];

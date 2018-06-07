@@ -7,7 +7,7 @@ export interface CameraConfig { region: FishEyeRegion, direction: DirectionOfVie
 export type Pixel     = number;
 
 /**
- * 画像上の魚眼円の位置と大きさ
+ * Position and size of the fisheye circle on the image
  */
 export interface FishEyeRegion {
   centerX: Pixel;
@@ -16,7 +16,7 @@ export interface FishEyeRegion {
 }
 
 /**
- * 注視点の向き、単位
+ * Gaze point direction, unit
  */
 export interface DirectionOfView {
   pitch: Radian;
@@ -25,41 +25,42 @@ export interface DirectionOfView {
 
 
 /**
- * 魚眼cnvを透視投影に変換する
- * ソースとなる cnv を動的に変えることができる、再利用可能な gl renderer
+ * Convert fish eye cnv to perspective projection
+ * A reusable gl renderer that can dynamically change the source cnv
  * @example
  * ```js
- * // ライフサイクル
+ * // life cycle
  * const a = new FisheyeCanvas2PerspectiveRenderer();
- * a.changeSource(video);         // 魚眼ソース指定
- * a.updateFisheyeRegion(region); // 魚眼ソースからクリッピングする領域を指定
- * a.setCanvasSize(size);         // 出力 canvas サイズを指定
- * a.setCameraPose(pose);         // カメラの向きを指定
- * a.render();                    // 描画
- * document.body.append(a.canvas); // 結果表示
+ * a.changeSource(video);         // Fisheye source specification
+ * a.updateFisheyeRegion(region); // Specify the region to be clipped from the fisheye source
+ * a.setCanvasSize(size);         // Specify output canvas size
+ * a.setCameraPose(pose);         // Specify camera orientation
+ * a.render();                    // drawing
+ * document.body.append(a.canvas); // Result display
+
  * ```
  */
 export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
 
 
   /**
-   * ソース魚眼をクリッピングしたテクスチャ
+   * Texture clipping source fish eye
    */
   readonly texctx1: CanvasRenderingContext2D;
   readonly texctx2: CanvasRenderingContext2D;
 
   /**
-   * 描画モード
-   * true - テクスチャ&ポリゴン削減モード
-   * false - naive モード
+   * Drawing mode
+   * true - Texture & polygon reduction mode
+   * false - naive mode
    */
   readonly sep_mode: boolean;
 
-  // 当たり判定
+  // Hit judgment
   readonly collisionSphere: THREE.Mesh;
 
   
-  /** load 前 === src 変更前に書き換えてね */
+  /** Before load === rewrite before src change */
   public mesh_num: number;
   private meshes: THREE.Mesh[];
   private texis: THREE.Texture[];
@@ -96,7 +97,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.local.position.z = 0;
     this.camera.position.z = 0.01;
 
-    // ドラッグ用当たり判定メッシュ
+    // Drag determination crash mesh
     // SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
     const sphereGeom =  new THREE.SphereGeometry( 100, 32, 16 );
     const blueMaterial = new THREE.MeshBasicMaterial( { color: 0x0000ff, side: THREE.BackSide, transparent: true, opacity: 0 } );
@@ -118,7 +119,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.prevEuler = {pitch: 0, yaw: 0};
 
     if(this.debug){
-      this.mesh_num = 2; // ローポリ
+      this.mesh_num = 2; // Low poly
     }
   }
 
@@ -130,8 +131,8 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   }
 
   /**
-   * 描画する
-   * needsUpdate して render
+   * draw
+   * needsUpdate to render
    */
   render(): void {
     if(this.src == null){ return; }
@@ -142,7 +143,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     
 
     if(this.sep_mode){
-      // テクスチャを回転
+      // Rotate texture
       this.texctx.translate(width/2, height/2);
       this.texctx.rotate(this.yaw);
       this.texctx.translate(-width/2, -height/2);
@@ -154,13 +155,12 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       const {width: w1, height: h1} = this.texctx1.canvas;
       const {width: w2, height: h2} = this.texctx2.canvas;
 
-      // texctx1 は左下の魚眼中心になるようにする
+      // Texctx 1 should be at the center of the lower left fisheye
       this.texctx1.translate(w1/2, h1/2);
       this.texctx1.rotate(Math.PI/2);
       this.texctx1.translate(-w1/2, -h1/2);
       
-      // texctx2 は左下が魚眼中心になっているのでそのままでよい
-
+      // As for the texctx 2, since the lower left is the center of the fisheye, it is acceptable as it is
       this.texctx.drawImage(this.src, sx, sy, sw, sh, dx, dy, dw, dh);
       this.texctx1.drawImage(this.texctx.canvas, 0,       0, width/2, height/2, 0, 0, w1, h1);
       this.texctx2.drawImage(this.texctx.canvas, width/2, 0, width/2, height/2, 0, 0, w2, h2);
@@ -218,7 +218,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     return this.camera.zoom;
   }
   /**
-   * 画面情報
+   * Screen information
    */
   get config(): CameraConfig {
     const {region, zoom, cameraPose: direction} = this;
@@ -241,8 +241,8 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       this.texctx2.canvas.height = height/2;
     }
   }
-    /**
-   * 以前のリソースを消す
+  /**
+   * Erase previous resources
    */
   protected unload(): void {
     this.meshes.forEach((mesh)=>{
@@ -258,25 +258,25 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   }
 
   /**
-   * リソースの置き換え
+   * Resource replacement
    */
   protected load(): void {
     const source = this.src;
 
     if(source == null){ return; }
-    // 現在の設定を取得
+    // Get current setting
     const config = this.config;
 
-    this.unload(); // 以前のパノラマを消す
+    this.unload(); // Erase previous panoramas
 
     this.resize();
     
-    // 天球 mesh
+    // Celestial mesh
     if(this.sep_mode){
       const tex1 = new THREE.Texture(this.texctx1.canvas);
       const tex2 = new THREE.Texture(this.texctx2.canvas);
       const mesh1 = createFisheyeMesh2(tex1, this.mesh_num);
-      mesh1.rotation.z = Math.PI/2; // 向かって左側になるように
+      mesh1.rotation.z = Math.PI/2; // To be on the left side      
       const mesh2 = createFisheyeMesh2(tex2, this.mesh_num);
 
       this.local.add(mesh1);
@@ -293,7 +293,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       this.meshes.push(mesh);
       this.texis.push(tex);
     }
-    // 以前の設定を反映
+    // Reflect previous setting
     this.config = config;
   }
 
@@ -303,16 +303,16 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       return;
     }
     const {width, height} = this.canvasSize;
-    // 取得したスクリーン座標を-1〜1に正規化する（WebGLは-1〜1で座標が表現される）
+    // Normalize the acquired screen coordinates to -1 to 1 (the coordinates are represented by WebGL from -1 to 1)
     const mouseX =  (offsetX/width)  * 2 - 1;
     const mouseY = -(offsetY/height) * 2 + 1;
     const pos = new THREE.Vector3(mouseX, mouseY, 1);
     const {camera, collisionSphere} = this;
-    // pos はスクリーン座標系なので、オブジェクトの座標系に変換
-    // オブジェクト座標系は今表示しているカメラからの視点なので、第二引数にカメラオブジェクトを渡す
-    // new THREE.Projector.unprojectVector(pos, camera); ↓最新版では以下の方法で得る
+    // Since pos is a screen coordinate system, convert it to the coordinate system of the object
+    // Since the object coordinate system is a viewpoint from the camera that is currently displayed, a camera object is passed as the second argument
+    // new THREE.Projector.unprojectVector(pos, camera); ↓ In the latest version you get it in the following way
     pos.unproject(camera);
-    // 始点、向きベクトルを渡してレイを作成
+    // Pass the start point and orientation vector and create ray
     const ray = new THREE.Raycaster(camera.position, pos.sub(camera.position).normalize());
     const objs = ray.intersectObjects([collisionSphere]);
     // https://threejs.org/docs/api/core/Raycaster.html
@@ -337,19 +337,19 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
 }
 
 /**
- * ptr は 画面
- * 奥へ向かって -z軸、
- * 右へ向かって x軸
- * 上に向かって y軸
- * であるような右手系 */
+ * ptr is the screen
+ * Head towards back - z axis,
+ * The x axis toward the right
+ * Upward y-axis
+ * Right-handed system like */
 function toEuler(ptr: THREE.Vector3, l: number): {pitch: Radian, yaw: Radian}{
-  // 画面
-  // 奥へ向かってx軸
-  // 右へy軸
-  // 上へz軸
-  // な座標系へ変換
+  // screen
+  // The x axis towards the back
+  // Right y axis
+  // Up z axis
+  // Convert to coordinate system
   const [x,y,z] = [-ptr.z, ptr.x, ptr.y]; 
-  // オイラー角に変換
+  // Convert to Euler angle
   const yaw   = - Math.atan2(y, x);
   const a = -z/l;
   const pitch = Math.atan2(z, Math.sqrt(x*x + y*y));
@@ -362,10 +362,10 @@ function toDeg(radians: number) {
 }
 
 /**
- * 正方形テクスチャを半球に投影したマテリアルとそのメッシュを得る
- * @param fisheye_texture - 正方形テクスチャ
+ * Get a material projecting a square texture onto a hemisphere and its mesh
+ * @param fisheye_texture - Square Texture
  */
-function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THREE.Mesh { // 正方形テクスチャを仮定
+function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THREE.Mesh { // Assume a square texture
   // SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
   const sphere = new THREE.SphereGeometry(1000, MESH_N, MESH_N, Math.PI, Math.PI);
   const {vertices, faces, faceVertexUvs} = sphere;
@@ -373,10 +373,10 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
   // 半球の正射影をとる
   faces.forEach((face, i)=>{
     // face: 一枚のポリゴン
-    const {a, b, c} = face; // ポリゴンの三つの頂点の ID
-    // faceVertexUvs[0] となっているが 1 は特にない - http://d.hatena.ne.jp/technohippy/20120718
+    const {a, b, c} = face; // ID of three vertices of polygon
+    // It is faceVertexUvs [0], but 1 is not particularly - http://d.hatena.ne.jp/technohippy/20120718
     faceVertexUvs[0][i] = [a, b, c].map((id)=>{
-      const {x, y, z} = vertices[id]; // ポリゴンの3次元頂点座標
+      const {x, y, z} = vertices[id]; // Three-dimensional vertex coordinates of polygons
       return new THREE.Vector2(
         (x+radius)/(2*radius),
         (y+radius)/(2*radius));
@@ -384,13 +384,13 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
   });
   const mat = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, map: fisheye_texture, side: THREE.BackSide } );
   const mesh = new THREE.Mesh(sphere, mat);
-  mesh.rotation.x = Math.PI*1/2; // 北緯側の半球になるように回転
+  mesh.rotation.x = Math.PI*1/2; // Rotate to be a hemisphere on the north latitude side
   return mesh;
 }
 
 
 /**
- * 北緯0-90度、西経0-90度の範囲
+ * A range of 0 to 90 degrees north latitude and 0 to 90 degree west longitude
  * front
  *    ^ y top
  *   /
@@ -401,9 +401,9 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
  * v z
  * back
  * 
- * back,-right,top の3つに囲まれた半半球を返す
+ * Return half-hemisphere surrounded by 3, back, -right, top
  * 
- *  テクスチャは x-y 平面に貼られる。魚眼 canvas は魚眼中心が左下になるように x-y 平面に図のように貼られる。
+ * The texture is stuck on the xy plane. The fisheye canvas is affixed to the xy plane as shown in the figure so that the center of the fish eye is at the bottom left.
  * 
  * ^_ y
  * |   `
@@ -413,21 +413,21 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
  *   \
  *    v z
  * 
- * このままでは魚眼中心がz方向にあるので `mesh.rotation.x = Math.PI/2;` でy方向へ魚眼中心を持ってくる.
+ * In this state, since the center of the fisheye is in the z direction, `mesh.rotation.x = Math.PI / 2;` brings the center of the fisheye in the y direction.
  * 
- * 最終的にできる mesh は rotation = 0 の状態で front-right-top の半半球として表示される。
+ * The final mesh is displayed as half-hemisphere of front-right-top with rotation = 0.
  */
 function createFisheyeMesh2(tex: THREE.Texture, MESH_N: number): THREE.Mesh {
   const sphere = new THREE.SphereGeometry(1000, MESH_N, MESH_N, Math.PI/2, Math.PI/2, 0, Math.PI/2);
   const {vertices, faces, faceVertexUvs} = sphere;
   const radius = sphere.boundingSphere.radius;
-  // 半球の正射影をとる
+  // Take the orthographic projection of the hemisphere
   faces.forEach((face, i)=>{
-    // face: 一枚のポリゴン
-    const {a, b, c} = face; // ポリゴンの三つの頂点の ID
-    // faceVertexUvs[0] となっているが 1 は特にない - http://d.hatena.ne.jp/technohippy/20120718
+    // face: One polygon
+    const {a, b, c} = face; // ID of three vertices of polygon    
+    // It is faceVertexUvs [0], but 1 is not particularly - http://d.hatena.ne.jp/technohippy/20120718
     faceVertexUvs[0][i] = [a, b, c].map((id)=>{
-      const {x, y, z} = vertices[id]; // ポリゴンの3次元頂点座標
+      const {x, y, z} = vertices[id]; // Three-dimensional vertex coordinates of polygons      
       return new THREE.Vector2(
         x/radius,
         y/radius);
@@ -435,7 +435,7 @@ function createFisheyeMesh2(tex: THREE.Texture, MESH_N: number): THREE.Mesh {
   });
   const mat = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, map: tex, side: THREE.DoubleSide } );
   const mesh = new THREE.Mesh(sphere, mat);
-  mesh.rotation.x = -Math.PI/2; // 北緯側の半球になるように回転
+  mesh.rotation.x = -Math.PI/2; // Rotate to be a hemisphere on the north latitude side  
   return mesh;
 }
 
