@@ -217,6 +217,13 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   get zoom(): number {
     return this.camera.zoom;
   }
+
+  setSphereScale(x: number, y: number, z: number) {
+    this.meshes.forEach((mesh)=>{
+        mesh.scale.set(x, y, z);
+    });
+  }
+
   /**
    * Screen information
    */
@@ -370,9 +377,9 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
   const sphere = new THREE.SphereGeometry(1000, MESH_N, MESH_N, Math.PI, Math.PI);
   const {vertices, faces, faceVertexUvs} = sphere;
   const radius = sphere.boundingSphere.radius;
-  // 半球の正射影をとる
+  // Take the orthographic projection of the hemisphere
   faces.forEach((face, i)=>{
-    // face: 一枚のポリゴン
+    // face: one polygon
     const {a, b, c} = face; // ID of three vertices of polygon
     // It is faceVertexUvs [0], but 1 is not particularly - http://d.hatena.ne.jp/technohippy/20120718
     faceVertexUvs[0][i] = [a, b, c].map((id)=>{
