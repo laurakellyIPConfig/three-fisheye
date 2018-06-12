@@ -218,7 +218,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     return this.camera.zoom;
   }
 
-  setSphereScale(x: number, y: number, z: number) {
+  public setSphereScale(x: number, y: number, z: number): void {
     this.meshes.forEach((mesh)=>{
         mesh.scale.set(x, y, z);
     });
