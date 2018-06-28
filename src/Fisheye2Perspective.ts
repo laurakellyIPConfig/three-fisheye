@@ -171,6 +171,8 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       this.texctx1.drawImage(this.texctx.canvas, 0,       0, width/2, height/2, 0, 0, w1, h1);
       this.texctx2.drawImage(this.texctx.canvas, width/2, 0, width/2, height/2, 0, 0, w2, h2);
     }else{
+      // Only render if we have image data
+      if (this.src instanceof HTMLImageElement && !this.src.complete) { return; }
       this.texctx.drawImage(this.src, sx, sy, sw, sh, dx, dy, dw, dh);
     }
 
