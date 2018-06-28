@@ -8,10 +8,13 @@ export declare class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicC
     protected mesh_num: number;
     private meshes;
     private texis;
+    private canvasShift;
     constructor(o?: {});
     render(): void;
     protected load(): void;
     protected unload(): void;
+    shift: number;
+    reload(): void;
     drag(type: "start" | "move", offsetX: number, offsetY: number): void;
 }
-export declare function createPanoramaMesh(fisheye_texture: any, panorama_width?: number, R1_ratio?: number, R2_ratio?: number): THREE.Mesh;
+export declare function createPanoramaMesh(fisheye_texture: any, panorama_width: number | undefined, R1_ratio: number | undefined, R2_ratio: number | undefined, shift: any): THREE.Mesh;

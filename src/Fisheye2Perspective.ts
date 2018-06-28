@@ -4,7 +4,7 @@ import {Fisheye, Radian} from "./Fisheye";
 
 export interface CameraConfig { region: FishEyeRegion, direction: DirectionOfView, zoom: number }
 
-export type Pixel     = number;
+export type Pixel = number;
 
 /**
  * Position and size of the fisheye circle on the image
@@ -22,6 +22,8 @@ export interface DirectionOfView {
   pitch: Radian;
   yaw: Radian;
 }
+
+export type Orientation = 'ceiling' | 'floor' | 'wall';
 
 
 /**
@@ -61,14 +63,17 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
 
   
   /** Before load === rewrite before src change */
+  private cameraOrientation: Orientation;
   public mesh_num: number;
   private meshes: THREE.Mesh[];
   private texis: THREE.Texture[];
   private readonly local: THREE.Object3D;
 
 
-  readonly CAMERA_PITCH_MAX: number;
-  readonly CAMERA_PITCH_MIN: number;
+  private CAMERA_PITCH_MAX: number;
+  private CAMERA_PITCH_MIN: number;
+  private CAMERA_YAW_MAX: number;
+  private CAMERA_YAW_MIN: number;
 
   // for debug
   readonly debug: boolean;
@@ -76,7 +81,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
 
   private prevEuler: {pitch: Radian, yaw: Radian};
 
-  constructor(o?: {textureSizeExponent?: number, mesh?: number, sep_mode?: boolean, debug?: boolean}){
+  constructor(o?: {textureSizeExponent?: number, mesh?: number, sep_mode?: boolean, orientation?: Orientation, debug?: boolean}){
     super(new THREE.PerspectiveCamera( 30, 4 / 3, 1, 10000 ), o);
 
     if(o != null && o.sep_mode === true){
@@ -84,10 +89,17 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     }else{
       this.sep_mode = false;
     }
+
     if(o != null && o.mesh != null){
       this.mesh_num = o.mesh;
     }else{
       this.mesh_num = 32;
+    }
+    
+    if(o != null && o.orientation !== null && o.orientation !== undefined){
+        this.orientation = o.orientation;
+    } else {
+        this.orientation = 'ceiling';
     }
 
     this.local = new THREE.Object3D();
@@ -112,10 +124,6 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       this.texctx2 = <CanvasRenderingContext2D>document.createElement("canvas").getContext("2d");
     }
 
-    
-
-    this.CAMERA_PITCH_MAX = Math.PI*1/8;
-    this.CAMERA_PITCH_MIN = (Math.PI/2)*7/8;
     this.prevEuler = {pitch: 0, yaw: 0};
 
     if(this.debug){
@@ -139,8 +147,6 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     const [sx, sy, sw, sh, dx, dy, dw, dh] = this.pos;
     this.texctx.canvas.width = this.texctx.canvas.width; // clear
     const {width, height} = this.texctx.canvas;
-
-    
 
     if(this.sep_mode){
       // Rotate texture
@@ -172,29 +178,70 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.renderer.render(this.scene, this.camera);
   }
 
+  set orientation(orientation: Orientation) {
+    this.cameraOrientation = orientation;
+    switch(this.cameraOrientation) {
+        case 'floor':
+            this.CAMERA_PITCH_MAX = Math.PI*1/8;
+            this.CAMERA_PITCH_MIN = (Math.PI/2)*7/8;
+            break;
+        case 'ceiling':
+            this.CAMERA_PITCH_MAX = Math.PI*5/8;
+            this.CAMERA_PITCH_MIN = (Math.PI/2)*15/8;
+            break;
+        case 'wall':
+            this.CAMERA_PITCH_MAX = Math.PI*1/8;
+            this.CAMERA_PITCH_MIN = (Math.PI/2)*15/8;
+            this.CAMERA_YAW_MIN = Math.PI/2;
+            this.CAMERA_YAW_MAX = -1 * Math.PI/2;
+            break;
+    }
 
+    if(this.pitch < this.CAMERA_PITCH_MAX){ this.pitch = this.CAMERA_PITCH_MAX; }
+    if(this.pitch > this.CAMERA_PITCH_MIN){ this.pitch = this.CAMERA_PITCH_MIN; }
+
+    if (this.orientation === 'wall') {
+        if(this.yaw < this.CAMERA_YAW_MAX){ this.yaw = this.CAMERA_YAW_MAX; }
+        if(this.yaw > this.CAMERA_YAW_MIN){ this.yaw = this.CAMERA_YAW_MIN; }
+    }
+  }
+
+  get orientation(): Orientation {
+    return this.cameraOrientation;
+  }
 
   set pitch(pitch: Radian){
-    this.local.rotation.x = -pitch;
+        if (this.local !== undefined) {
+            this.local.rotation.x = -pitch;
+        }
   }
   get pitch(): Radian {
-    return -this.local.rotation.x;
+        if (this.local === undefined) { return 0 });
+        return -this.local.rotation.x;
   }
   private _yaw: Radian;
   set yaw(yaw: Radian){
-    if(this.meshes.length === 0){ return; }
+    if(this.meshes === undefined || this.meshes.length === 0){ return; }
     if(this.sep_mode){
       this._yaw = yaw;
     }else{
-      this.meshes[0].rotation.z = yaw;
+      if (this.orientation === 'wall') {
+        this.meshes[0].rotation.y = -1 * yaw;
+      } else {
+        this.meshes[0].rotation.z = yaw;
+      }
     }
   }
   get yaw(): Radian {
-    if(this.meshes.length === 0){ return 0; }
+    if(this.meshes === undefined || this.meshes.length === 0){ return 0; }
     if(this.sep_mode){
       return this._yaw;
     }else{
-      return this.meshes[0].rotation.z;
+      if (this.orientation === 'wall') {
+        return -1 * this.meshes[0].rotation.y;
+      } else {
+        return this.meshes[0].rotation.z;
+      }
     }
   }
 
@@ -222,6 +269,10 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.meshes.forEach((mesh)=>{
         mesh.scale.set(x, y, z);
     });
+  }
+
+  public setOrientation(orientation: Orientation): void {
+    this.orientation = orientation;
   }
 
   /**
@@ -305,13 +356,18 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   }
 
   drag(type: "start" | "move", offsetX: number, offsetY: number){
+
     if(this.debug){
       console.info("Fisheye2Perspective now debug mode so use OrbitControls");
       return;
     }
     const {width, height} = this.canvasSize;
     // Normalize the acquired screen coordinates to -1 to 1 (the coordinates are represented by WebGL from -1 to 1)
-    const mouseX =  (offsetX/width)  * 2 - 1;
+    var mouseX =  (offsetX/width)  * 2 - 1;
+
+    if (this.orientation !== 'wall' && this.pitch > Math.PI/2 ) {
+        mouseX *= -1; // invert X for ceiling mode
+    }
     const mouseY = -(offsetY/height) * 2 + 1;
     const pos = new THREE.Vector3(mouseX, mouseY, 1);
     const {camera, collisionSphere} = this;
@@ -332,9 +388,15 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     const curr = toEuler(obj.point, obj.distance);
     const {pitch, yaw} = this;
     let   _pitch = pitch - (curr.pitch - this.prevEuler.pitch);
-    const _yaw   = yaw   - (curr.yaw - this.prevEuler.yaw);
+    let _yaw   = yaw   - (curr.yaw - this.prevEuler.yaw);
     if(_pitch < this.CAMERA_PITCH_MAX){ _pitch = this.CAMERA_PITCH_MAX; }
     if(_pitch > this.CAMERA_PITCH_MIN){ _pitch = this.CAMERA_PITCH_MIN; }
+
+    if (this.orientation === 'wall') {
+        if(_yaw < this.CAMERA_YAW_MAX){ _yaw = this.CAMERA_YAW_MAX; }
+        if(_yaw > this.CAMERA_YAW_MIN){ _yaw = this.CAMERA_YAW_MIN; }
+    }
+
     this.pitch = _pitch;
     this.yaw = _yaw;
     this.render();
@@ -383,10 +445,34 @@ function createFisheyeMesh(fisheye_texture: THREE.Texture, MESH_N: number): THRE
     const {a, b, c} = face; // ID of three vertices of polygon
     // It is faceVertexUvs [0], but 1 is not particularly - http://d.hatena.ne.jp/technohippy/20120718
     faceVertexUvs[0][i] = [a, b, c].map((id)=>{
-      const {x, y, z} = vertices[id]; // Three-dimensional vertex coordinates of polygons
-      return new THREE.Vector2(
-        (x+radius)/(2*radius),
-        (y+radius)/(2*radius));
+      var {x, y, z} = vertices[id], // Three-dimensional vertex coordinates of polygons
+        a, b,
+        r,      // radius of vector defined by x,y,z going through the origin piont in the lens
+        theta,  // angle of incidcence through the lens
+        x1, y1, // x, y adjusted for angle of theta
+        u, v;   // U, V coordinates for pixel mapping in range [0, 1]
+
+      if (z > -0.00000000001) {
+        z = -0.00000000001;
+      }
+
+      a = x/z;
+      b = y/z;
+  
+      r = Math.sqrt(a*a + b*b); 
+      theta = Math.atan(r);
+    
+      x1 = 2 * (theta/r) * a / Math.PI;
+      y1 = 2* (theta/r) * b / Math.PI;
+
+      u = (x1 + 1) / (2);
+      v = (y1 + 1) / (2);
+
+    return new THREE.Vector2(
+        u,
+        v
+    );
+
     });
   });
   const mat = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, map: fisheye_texture, side: THREE.BackSide } );
@@ -442,7 +528,7 @@ function createFisheyeMesh2(tex: THREE.Texture, MESH_N: number): THREE.Mesh {
   });
   const mat = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, map: tex, side: THREE.DoubleSide } );
   const mesh = new THREE.Mesh(sphere, mat);
-  mesh.rotation.x = -Math.PI/2; // Rotate to be a hemisphere on the north latitude side  
+  mesh.rotation.x = -Math.PI/2; // Rotate to be a hemisphere on the north latitude side
   return mesh;
 }
 

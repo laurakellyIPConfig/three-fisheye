@@ -8,6 +8,7 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
   protected mesh_num: number;
   private meshes: THREE.Mesh[];
   private texis: THREE.Texture[];
+  private canvasShift: number;
   
   constructor(o?: {}){
     // left, right, top, bottom, near, far
@@ -16,6 +17,7 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     super(camera, o);
     this.meshes = [];
     this.texis = [];
+    this.canvasShift = 0;
   }
   render(): void {
     if(this.src == null){ return; }
@@ -33,7 +35,8 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     // Optimize the current renderer to the current pixel size
     this.resize();
     const tex = new THREE.Texture(this.texctx.canvas);
-    const mesh = createPanoramaMesh(tex);
+    const mesh = createPanoramaMesh(tex, 0, 0, 1, this.canvasShift);
+    const mesh2 = mesh.clone();
     const {width, height} = (<THREE.PlaneGeometry>mesh.geometry).parameters;
     this.renderer.setSize( width, height );
     this.camera.left = width/-2;
@@ -42,7 +45,9 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     this.camera.bottom = height/-2;
     this.camera.updateProjectionMatrix();
     this.scene.add(mesh);
+    this.scene.add(mesh2);
     this.meshes.push(mesh);
+    this.meshes.push(mesh2);
     this.texis.push(tex);
   }
   protected unload(): void {
@@ -57,14 +62,21 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     this.meshes = [];
     this.texis = [];
   }
+  set shift(shift: number) {
+    var temp = shift % (<THREE.PlaneGeometry>this.meshes[0].geometry).parameters.width;
+    this.meshes[0].position.x = temp > 0 ? temp - (<THREE.PlaneGeometry>this.meshes[0].geometry).parameters.width : temp;
+    this.meshes[1].position.x = this.meshes[0].position.x + (<THREE.PlaneGeometry>this.meshes[0].geometry).parameters.width;
+  }
+  public reload() {
+    this.load();
+  }
   drag(type: "start" | "move", offsetX: number, offsetY: number) {
 
   }
 }
 
+export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0, R2_ratio=1, shift){
 
-
-export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0, R2_ratio=1){
   // Assume a square texture
   //const panorama_width = 400; Panorama board Polar width in space, default is R2 circumference length
   //const R1_ratio = 0; // Fan-shaped lower quarter 0 - 1
@@ -102,7 +114,7 @@ export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0
       // Since the texture is a fisheye image this time, the texture coordinates to be displayed by the UV coordinates (0,0) are (0, 0) in Euler coordinates and (cx, cy) in orthogonal coordinates.
       // Consider which position on the texture should be displayed (mapped) for a certain pixel on Plane Geometry.
       const r = (yD/Hd)*(R2-R1) + R1;
-      const theta = (xD/Wd)*2.0*Math.PI;
+      const theta = (xD/Wd)*2.0*Math.PI + shift;
       const xS = Cx + r*Math.sin(theta);
       const yS = Cy + r*Math.cos(theta);
       return new THREE.Vector2(xS, yS);

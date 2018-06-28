@@ -21,6 +21,7 @@ export interface DirectionOfView {
     pitch: Radian;
     yaw: Radian;
 }
+export declare type Orientation = 'ceiling' | 'floor' | 'wall';
 /**
  * Convert fish eye cnv to perspective projection
  * A reusable gl renderer that can dynamically change the source cnv
@@ -51,18 +52,22 @@ export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera
     readonly sep_mode: boolean;
     readonly collisionSphere: THREE.Mesh;
     /** Before load === rewrite before src change */
+    private cameraOrientation;
     mesh_num: number;
     private meshes;
     private texis;
     private readonly local;
-    readonly CAMERA_PITCH_MAX: number;
-    readonly CAMERA_PITCH_MIN: number;
+    private CAMERA_PITCH_MAX;
+    private CAMERA_PITCH_MIN;
+    private CAMERA_YAW_MAX;
+    private CAMERA_YAW_MIN;
     readonly debug: boolean;
     private prevEuler;
     constructor(o?: {
         textureSizeExponent?: number;
         mesh?: number;
         sep_mode?: boolean;
+        orientation?: Orientation;
         debug?: boolean;
     });
     destructor(): void;
@@ -71,12 +76,14 @@ export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera
      * needsUpdate to render
      */
     render(): void;
+    orientation: Orientation;
     pitch: Radian;
     private _yaw;
     yaw: Radian;
     cameraPose: DirectionOfView;
     zoom: number;
     setSphereScale(x: number, y: number, z: number): void;
+    setOrientation(orientation: Orientation): void;
     /**
      * Screen information
      */
