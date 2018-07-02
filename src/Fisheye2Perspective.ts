@@ -25,7 +25,6 @@ export interface DirectionOfView {
 
 export type Orientation = 'ceiling' | 'floor' | 'wall';
 
-
 /**
  * Convert fish eye cnv to perspective projection
  * A reusable gl renderer that can dynamically change the source cnv
@@ -148,7 +147,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.texctx.canvas.width = this.texctx.canvas.width; // clear
     const {width, height} = this.texctx.canvas;
 
-    if(this.sep_mode){
+    if(this.sep_mode) {
       // Rotate texture
       this.texctx.translate(width/2, height/2);
       this.texctx.rotate(this.yaw);
@@ -170,7 +169,7 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
       this.texctx.drawImage(this.src, sx, sy, sw, sh, dx, dy, dw, dh);
       this.texctx1.drawImage(this.texctx.canvas, 0,       0, width/2, height/2, 0, 0, w1, h1);
       this.texctx2.drawImage(this.texctx.canvas, width/2, 0, width/2, height/2, 0, 0, w2, h2);
-    }else{
+    } else {
       // Only render if we have image data
       if (this.src instanceof HTMLImageElement && !this.src.complete) { return; }
       this.texctx.drawImage(this.src, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -260,11 +259,11 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   }
 
   set zoom(scale: number) {
-    this.camera.zoom = scale;
-    this.camera.updateProjectionMatrix();
+        this.camera.zoom = scale;
+        this.camera.updateProjectionMatrix();
   }
   get zoom(): number {
-    return this.camera.zoom;
+        return this.camera.zoom;
   }
 
   public setSphereScale(x: number, y: number, z: number): void {

@@ -487,6 +487,12 @@ var __extends = (this && this.__extends) || (function () {
             _this.meshes = [];
             _this.texis = [];
             _this.canvasShift = 0;
+            if (o != null && o.orientation !== null && o.orientation !== undefined) {
+                _this.cameraOrientation = o.orientation;
+            }
+            else {
+                _this.cameraOrientation = 'ceiling';
+            }
             return _this;
         }
         Fisheye2Equirectangular.prototype.render = function () {
@@ -509,7 +515,7 @@ var __extends = (this && this.__extends) || (function () {
             // Optimize the current renderer to the current pixel size
             this.resize();
             var tex = new THREE.Texture(this.texctx.canvas);
-            var mesh = createPanoramaMesh(tex, 0, 0, 1, this.canvasShift);
+            var mesh = createPanoramaMesh(tex, 0, 0.25, 1, this.canvasShift);
             var mesh2 = mesh.clone();
             var _a = mesh.geometry.parameters, width = _a.width, height = _a.height;
             this.renderer.setSize(width, height);
@@ -517,6 +523,7 @@ var __extends = (this && this.__extends) || (function () {
             this.camera.right = width / 2;
             this.camera.top = height / 2;
             this.camera.bottom = height / -2;
+            this.updateCameraOrientation();
             this.camera.updateProjectionMatrix();
             this.scene.add(mesh);
             this.scene.add(mesh2);
@@ -537,6 +544,29 @@ var __extends = (this && this.__extends) || (function () {
             this.meshes = [];
             this.texis = [];
         };
+        Fisheye2Equirectangular.prototype.updateCameraOrientation = function () {
+            switch (this.cameraOrientation) {
+                case 'ceiling':
+                    this.camera.rotation.z = Math.PI;
+                    break;
+                case 'wall':
+                case 'floor':
+                    this.camera.rotation.z = 0;
+                    break;
+            }
+            this.camera.updateProjectionMatrix();
+        };
+        Fisheye2Equirectangular.prototype.setOrientation = function (orientation) {
+            this.orientation = orientation;
+        };
+        Object.defineProperty(Fisheye2Equirectangular.prototype, "orientation", {
+            set: function (orientation) {
+                this.cameraOrientation = orientation;
+                this.updateCameraOrientation();
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Fisheye2Equirectangular.prototype, "shift", {
             set: function (shift) {
                 var temp = shift % this.meshes[0].geometry.parameters.width;
@@ -578,7 +608,7 @@ var __extends = (this && this.__extends) || (function () {
         if (panorama_width <= 0) {
             panorama_width = width;
         }
-        var plane = new THREE.PlaneGeometry(panorama_width, panorama_width * h_per_w_ratio, 32, 32);
+        var plane = new THREE.PlaneGeometry(panorama_width, panorama_width * h_per_w_ratio, 128, 128);
         var vertices = plane.vertices, faces = plane.faces, faceVertexUvs = plane.faceVertexUvs;
         // Convert UV to fan type
         var _b = [1, 1], Hs = _b[0], Ws = _b[1]; // Size of UV
@@ -734,6 +764,7 @@ var __extends = (this && this.__extends) || (function () {
                 this.texctx2.drawImage(this.texctx.canvas, width / 2, 0, width / 2, height / 2, 0, 0, w2, h2);
             }
             else {
+                // Only render if we have image data
                 if (this.src instanceof HTMLImageElement && !this.src.complete) {
                     return;
                 }

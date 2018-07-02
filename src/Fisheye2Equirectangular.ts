@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import {Fisheye, mercator2Sphere, sphere2Fisheye} from "./Fisheye";
+
+export type Orientation = 'ceiling' | 'floor' | 'wall';
+
 /**
  * Equirectangular Cylindrical Mercator
 * http://wiki.panotools.org/Projections
@@ -9,8 +12,9 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
   private meshes: THREE.Mesh[];
   private texis: THREE.Texture[];
   private canvasShift: number;
-  
-  constructor(o?: {}){
+  private cameraOrientation: Orientation;
+
+  constructor(o?: { orientation?: Orientation }){
     // left, right, top, bottom, near, far
     const camera = new THREE.OrthographicCamera(600/-2, 600/2, 400/2, 400/-2, 1, 10000);
     camera.position.z = 0.01;
@@ -18,7 +22,14 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     this.meshes = [];
     this.texis = [];
     this.canvasShift = 0;
+
+    if(o != null && o.orientation !== null && o.orientation !== undefined){
+        this.cameraOrientation = o.orientation;
+    } else {
+        this.cameraOrientation = 'ceiling';
+    }
   }
+
   render(): void {
     if(this.src == null){ return; }
     const [sx, sy, sw, sh, dx, dy, dw, dh] = this.pos;
@@ -35,7 +46,7 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     // Optimize the current renderer to the current pixel size
     this.resize();
     const tex = new THREE.Texture(this.texctx.canvas);
-    const mesh = createPanoramaMesh(tex, 0, 0, 1, this.canvasShift);
+    const mesh = createPanoramaMesh(tex, 0, 0.25, 1, this.canvasShift);
     const mesh2 = mesh.clone();
     const {width, height} = (<THREE.PlaneGeometry>mesh.geometry).parameters;
     this.renderer.setSize( width, height );
@@ -43,6 +54,9 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     this.camera.right = width/2;
     this.camera.top = height/2;
     this.camera.bottom = height/-2;
+
+    this.updateCameraOrientation();
+
     this.camera.updateProjectionMatrix();
     this.scene.add(mesh);
     this.scene.add(mesh2);
@@ -61,6 +75,25 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     });
     this.meshes = [];
     this.texis = [];
+  }
+  private updateCameraOrientation(): void {
+    switch(this.cameraOrientation) {
+        case 'ceiling':
+            this.camera.rotation.z = Math.PI;
+            break;
+        case 'wall':
+        case 'floor':
+            this.camera.rotation.z = 0;
+            break;
+    }
+    this.camera.updateProjectionMatrix();
+  }
+  public setOrientation(orientation: Orientation): void {
+    this.orientation = orientation;
+  }
+  set orientation(orientation: Orientation) {
+    this.cameraOrientation = orientation;
+    this.updateCameraOrientation();
   }
   set shift(shift: number) {
     var temp = shift % (<THREE.PlaneGeometry>this.meshes[0].geometry).parameters.width;
@@ -97,7 +130,7 @@ export function createPanoramaMesh(fisheye_texture, panorama_width=0, R1_ratio=0
   if(panorama_width <= 0){
     panorama_width = width;
   }
-  const plane = new THREE.PlaneGeometry(panorama_width, panorama_width*h_per_w_ratio, 32, 32);
+  const plane = new THREE.PlaneGeometry(panorama_width, panorama_width*h_per_w_ratio, 128, 128);
   const {vertices, faces, faceVertexUvs} = plane;
   // Convert UV to fan type
   const [Hs, Ws] = [1, 1]; // Size of UV
