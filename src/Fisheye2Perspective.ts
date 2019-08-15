@@ -200,10 +200,15 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
 
     if(this.pitch < this.CAMERA_PITCH_MAX){ this.pitch = this.CAMERA_PITCH_MAX; }
     if(this.pitch > this.CAMERA_PITCH_MIN){ this.pitch = this.CAMERA_PITCH_MIN; }
+    if(this.yaw < this.CAMERA_YAW_MAX){ this.yaw = this.CAMERA_YAW_MAX; }
+    if(this.yaw > this.CAMERA_YAW_MIN){ this.yaw = this.CAMERA_YAW_MIN; }
 
-    if (this.orientation === 'wall') {
-        if(this.yaw < this.CAMERA_YAW_MAX){ this.yaw = this.CAMERA_YAW_MAX; }
-        if(this.yaw > this.CAMERA_YAW_MIN){ this.yaw = this.CAMERA_YAW_MIN; }
+    if(this.meshes !== undefined && this.meshes.length > 0) {
+        if (this.orientation === 'wall') {
+            this.meshes[0].rotation.z = 0; 
+        } else {
+            this.meshes[0].rotation.y = 0;
+        }
     }
   }
 

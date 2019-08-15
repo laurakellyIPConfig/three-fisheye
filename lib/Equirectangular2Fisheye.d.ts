@@ -10,4 +10,4 @@ export declare class Equirectangular2Fisheye extends Fisheye<THREE.OrthographicC
     protected unload(): void;
     drag(type: "start" | "move", offsetX: number, offsetY: number): void;
 }
-export declare function createFisheyeMesh(tex: THREE.Texture, R1_ratio?: number, R2_ratio?: number): THREE.Mesh;
+export declare function createFisheyeMesh(tex: THREE.Texture, R1_ratio?: number, R2_ratio?: number): any;

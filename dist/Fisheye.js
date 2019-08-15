@@ -392,8 +392,8 @@ var __extends = (this && this.__extends) || (function () {
      * @return [longitude, latitude] - Spherical coordinates
      */
     function fisheye2Sphere(x, y, r) {
-        var _a;
         if (r === void 0) { r = 1; }
+        var _a;
         var _b = [1, 1], cx = _b[0], cy = _b[1];
         _a = [x - cx, y - cy], x = _a[0], y = _a[1];
         var _c = [Math.atan2(y, x), Math.sqrt(x * x + y * y)], theta = _c[0], l = _c[1]; // Cartesian to Euler
@@ -486,7 +486,6 @@ var __extends = (this && this.__extends) || (function () {
             _this = _super.call(this, camera, o) || this;
             _this.meshes = [];
             _this.texis = [];
-            _this.canvasShift = 0;
             if (o != null && o.orientation !== null && o.orientation !== undefined) {
                 _this.cameraOrientation = o.orientation;
             }
@@ -515,7 +514,7 @@ var __extends = (this && this.__extends) || (function () {
             // Optimize the current renderer to the current pixel size
             this.resize();
             var tex = new THREE.Texture(this.texctx.canvas);
-            var mesh = createPanoramaMesh(tex, 0, 0.25, 1, this.canvasShift);
+            var mesh = createPanoramaMesh(tex, 0, 0.25, 1);
             var mesh2 = mesh.clone();
             var _a = mesh.geometry.parameters, width = _a.width, height = _a.height;
             this.renderer.setSize(width, height);
@@ -569,9 +568,10 @@ var __extends = (this && this.__extends) || (function () {
         });
         Object.defineProperty(Fisheye2Equirectangular.prototype, "shift", {
             set: function (shift) {
-                var temp = shift % this.meshes[0].geometry.parameters.width;
-                this.meshes[0].position.x = temp > 0 ? temp - this.meshes[0].geometry.parameters.width : temp;
-                this.meshes[1].position.x = this.meshes[0].position.x + this.meshes[0].geometry.parameters.width;
+                var width = this.meshes[0].geometry.parameters.width;
+                var pixelShift = ((shift * width) / (2 * Math.PI)) % width;
+                this.meshes[0].position.x = pixelShift > 0 ? pixelShift - width : pixelShift;
+                this.meshes[1].position.x = this.meshes[0].position.x + width;
             },
             enumerable: true,
             configurable: true
@@ -584,7 +584,7 @@ var __extends = (this && this.__extends) || (function () {
         return Fisheye2Equirectangular;
     }(Fisheye_1.Fisheye));
     exports.Fisheye2Equirectangular = Fisheye2Equirectangular;
-    function createPanoramaMesh(fisheye_texture, panorama_width, R1_ratio, R2_ratio, shift) {
+    function createPanoramaMesh(fisheye_texture, panorama_width, R1_ratio, R2_ratio) {
         if (panorama_width === void 0) { panorama_width = 0; }
         if (R1_ratio === void 0) { R1_ratio = 0; }
         if (R2_ratio === void 0) { R2_ratio = 1; }
@@ -626,7 +626,7 @@ var __extends = (this && this.__extends) || (function () {
                 // Since the texture is a fisheye image this time, the texture coordinates to be displayed by the UV coordinates (0,0) are (0, 0) in Euler coordinates and (cx, cy) in orthogonal coordinates.
                 // Consider which position on the texture should be displayed (mapped) for a certain pixel on Plane Geometry.
                 var r = (yD / Hd) * (R2 - R1) + R1;
-                var theta = (xD / Wd) * 2.0 * Math.PI + shift;
+                var theta = (xD / Wd) * 2.0 * Math.PI;
                 var xS = Cx + r * Math.sin(theta);
                 var yS = Cy + r * Math.cos(theta);
                 return new THREE.Vector2(xS, yS);
@@ -801,12 +801,18 @@ var __extends = (this && this.__extends) || (function () {
                 if (this.pitch > this.CAMERA_PITCH_MIN) {
                     this.pitch = this.CAMERA_PITCH_MIN;
                 }
-                if (this.orientation === 'wall') {
-                    if (this.yaw < this.CAMERA_YAW_MAX) {
-                        this.yaw = this.CAMERA_YAW_MAX;
+                if (this.yaw < this.CAMERA_YAW_MAX) {
+                    this.yaw = this.CAMERA_YAW_MAX;
+                }
+                if (this.yaw > this.CAMERA_YAW_MIN) {
+                    this.yaw = this.CAMERA_YAW_MIN;
+                }
+                if (this.meshes !== undefined && this.meshes.length > 0) {
+                    if (this.orientation === 'wall') {
+                        this.meshes[0].rotation.z = 0;
                     }
-                    if (this.yaw > this.CAMERA_YAW_MIN) {
-                        this.yaw = this.CAMERA_YAW_MIN;
+                    else {
+                        this.meshes[0].rotation.y = 0;
                     }
                 }
             },
