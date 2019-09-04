@@ -576,6 +576,16 @@ var __extends = (this && this.__extends) || (function () {
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(Fisheye2Equirectangular.prototype, "shiftDegrees", {
+            set: function (shift) {
+                var width = this.meshes[0].geometry.parameters.width;
+                var pixelShift = ((shift * width) / 360) % width;
+                this.meshes[0].position.x = pixelShift > 0 ? pixelShift - width : pixelShift;
+                this.meshes[1].position.x = this.meshes[0].position.x + width;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Fisheye2Equirectangular.prototype.reload = function () {
             this.load();
         };
@@ -778,34 +788,38 @@ var __extends = (this && this.__extends) || (function () {
                 return this.cameraOrientation;
             },
             set: function (orientation) {
+                if (this.cameraOrientation === orientation) {
+                    return;
+                }
                 this.cameraOrientation = orientation;
                 switch (this.cameraOrientation) {
                     case 'floor':
-                        this.CAMERA_PITCH_MAX = Math.PI * 1 / 8;
-                        this.CAMERA_PITCH_MIN = (Math.PI / 2) * 7 / 8;
+                        this.CAMERA_PITCH_MIN = 0;
+                        this.CAMERA_PITCH_MAX = Math.PI / 2;
+                        this.CAMERA_YAW_MIN = 0;
+                        this.CAMERA_YAW_MAX = 2 * Math.PI;
+                        this.pitch = Math.PI / 4;
+                        this.yaw = 0;
+                        this.zoom = 0.5;
                         break;
                     case 'ceiling':
-                        this.CAMERA_PITCH_MAX = Math.PI * 5 / 8;
-                        this.CAMERA_PITCH_MIN = (Math.PI / 2) * 15 / 8;
+                        this.CAMERA_PITCH_MIN = 0;
+                        this.CAMERA_PITCH_MAX = Math.PI / 2;
+                        this.CAMERA_YAW_MIN = 0;
+                        this.CAMERA_YAW_MAX = 2 * Math.PI;
+                        this.pitch = Math.PI / 4;
+                        this.yaw = 0;
+                        this.zoom = 0.5;
                         break;
                     case 'wall':
-                        this.CAMERA_PITCH_MAX = Math.PI * 1 / 8;
-                        this.CAMERA_PITCH_MIN = (Math.PI / 2) * 15 / 8;
-                        this.CAMERA_YAW_MIN = Math.PI / 2;
-                        this.CAMERA_YAW_MAX = -1 * Math.PI / 2;
+                        this.CAMERA_PITCH_MIN = -1 * Math.PI / 2;
+                        this.CAMERA_PITCH_MAX = Math.PI / 2;
+                        this.CAMERA_YAW_MIN = -1 * Math.PI / 2;
+                        this.CAMERA_YAW_MAX = Math.PI / 2;
+                        this.pitch = 0;
+                        this.yaw = 0;
+                        this.zoom = 0.5;
                         break;
-                }
-                if (this.pitch < this.CAMERA_PITCH_MAX) {
-                    this.pitch = this.CAMERA_PITCH_MAX;
-                }
-                if (this.pitch > this.CAMERA_PITCH_MIN) {
-                    this.pitch = this.CAMERA_PITCH_MIN;
-                }
-                if (this.yaw < this.CAMERA_YAW_MAX) {
-                    this.yaw = this.CAMERA_YAW_MAX;
-                }
-                if (this.yaw > this.CAMERA_YAW_MIN) {
-                    this.yaw = this.CAMERA_YAW_MIN;
                 }
                 if (this.meshes !== undefined && this.meshes.length > 0) {
                     if (this.orientation === 'wall') {
@@ -819,18 +833,78 @@ var __extends = (this && this.__extends) || (function () {
             enumerable: true,
             configurable: true
         });
+        Fisheye2Perspective.prototype.getViewLimits = function () {
+            return {
+                pitch: {
+                    min: this.CAMERA_PITCH_MIN,
+                    max: this.CAMERA_PITCH_MAX
+                },
+                yaw: {
+                    min: this.CAMERA_YAW_MIN,
+                    max: this.CAMERA_YAW_MAX
+                }
+            };
+        };
+        Fisheye2Perspective.prototype.getViewLimitsDegrees = function () {
+            return {
+                pitch: {
+                    min: toDeg(this.CAMERA_PITCH_MIN),
+                    max: toDeg(this.CAMERA_PITCH_MAX)
+                },
+                yaw: {
+                    min: toDeg(this.CAMERA_YAW_MIN),
+                    max: toDeg(this.CAMERA_YAW_MAX)
+                }
+            };
+        };
+        Object.defineProperty(Fisheye2Perspective.prototype, "pitchDegrees", {
+            get: function () {
+                return toDeg(this.pitch);
+            },
+            set: function (pitch) {
+                this.pitch = toRad(pitch);
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Fisheye2Perspective.prototype, "pitch", {
             get: function () {
                 if (this.local === undefined) {
                     return 0;
                 }
                 ;
-                return -this.local.rotation.x;
+                if (this.orientation === 'ceiling') {
+                    return (this.local.rotation.x - Math.PI);
+                }
+                else if (this.orientation === 'wall') {
+                    return (-1 * Math.PI / 2 - this.local.rotation.x);
+                }
+                else {
+                    return -1 * this.local.rotation.x;
+                }
             },
             set: function (pitch) {
                 if (this.local !== undefined) {
-                    this.local.rotation.x = -pitch;
+                    if (this.orientation === 'ceiling') {
+                        this.local.rotation.x = Math.PI + pitch;
+                    }
+                    else if (this.orientation === 'wall') {
+                        this.local.rotation.x = -1 * Math.PI / 2 - pitch;
+                    }
+                    else {
+                        this.local.rotation.x = -1 * pitch;
+                    }
                 }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Fisheye2Perspective.prototype, "yawDegrees", {
+            get: function () {
+                return toDeg(this.yaw);
+            },
+            set: function (yaw) {
+                this.yaw = toRad(yaw);
             },
             enumerable: true,
             configurable: true
@@ -887,6 +961,22 @@ var __extends = (this && this.__extends) || (function () {
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(Fisheye2Perspective.prototype, "cameraPoseDegrees", {
+            get: function () {
+                var _a = this, camera = _a.camera, local = _a.local;
+                var pitch = this.pitchDegrees;
+                var yaw = this.yawDegrees;
+                return { pitch: pitch, yaw: yaw };
+            },
+            set: function (_a) {
+                var pitch = _a.pitch, yaw = _a.yaw;
+                var _b = this, camera = _b.camera, local = _b.local;
+                this.pitchDegrees = pitch;
+                this.yawDegrees = yaw;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Fisheye2Perspective.prototype, "zoom", {
             get: function () {
                 return this.camera.zoom;
@@ -902,9 +992,6 @@ var __extends = (this && this.__extends) || (function () {
             this.meshes.forEach(function (mesh) {
                 mesh.scale.set(x, y, z);
             });
-        };
-        Fisheye2Perspective.prototype.setOrientation = function (orientation) {
-            this.orientation = orientation;
         };
         Object.defineProperty(Fisheye2Perspective.prototype, "config", {
             /**
@@ -993,10 +1080,11 @@ var __extends = (this && this.__extends) || (function () {
             var _a = this.canvasSize, width = _a.width, height = _a.height;
             // Normalize the acquired screen coordinates to -1 to 1 (the coordinates are represented by WebGL from -1 to 1)
             var mouseX = (offsetX / width) * 2 - 1;
-            if (this.orientation !== 'wall' && this.pitch > Math.PI / 2) {
-                mouseX *= -1; // invert X for ceiling mode
-            }
             var mouseY = -(offsetY / height) * 2 + 1;
+            if (this.orientation === 'ceiling') {
+                mouseX *= -1;
+                mouseY *= -1;
+            }
             var pos = new THREE.Vector3(mouseX, mouseY, 1);
             var _b = this, camera = _b.camera, collisionSphere = _b.collisionSphere;
             // Since pos is a screen coordinate system, convert it to the coordinate system of the object
@@ -1019,17 +1107,17 @@ var __extends = (this && this.__extends) || (function () {
             var _c = this, pitch = _c.pitch, yaw = _c.yaw;
             var _pitch = pitch - (curr.pitch - this.prevEuler.pitch);
             var _yaw = yaw - (curr.yaw - this.prevEuler.yaw);
-            if (_pitch < this.CAMERA_PITCH_MAX) {
+            if (_pitch > this.CAMERA_PITCH_MAX) {
                 _pitch = this.CAMERA_PITCH_MAX;
             }
-            if (_pitch > this.CAMERA_PITCH_MIN) {
+            if (_pitch < this.CAMERA_PITCH_MIN) {
                 _pitch = this.CAMERA_PITCH_MIN;
             }
             if (this.orientation === 'wall') {
-                if (_yaw < this.CAMERA_YAW_MAX) {
+                if (_yaw > this.CAMERA_YAW_MAX) {
                     _yaw = this.CAMERA_YAW_MAX;
                 }
-                if (_yaw > this.CAMERA_YAW_MIN) {
+                if (_yaw < this.CAMERA_YAW_MIN) {
                     _yaw = this.CAMERA_YAW_MIN;
                 }
             }
@@ -1063,6 +1151,9 @@ var __extends = (this && this.__extends) || (function () {
     }
     function toDeg(radians) {
         return radians * 180 / Math.PI;
+    }
+    function toRad(degrees) {
+        return degrees * Math.PI / 180;
     }
     /**
      * Get a material projecting a square texture onto a hemisphere and its mesh

@@ -99,6 +99,13 @@ export class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicCamera> {
     this.meshes[0].position.x = pixelShift > 0 ? pixelShift - width : pixelShift;
     this.meshes[1].position.x = this.meshes[0].position.x + width;
   }
+
+  set shiftDegrees(shift: number) {
+    var width = (<THREE.PlaneGeometry>this.meshes[0].geometry).parameters.width;
+    var pixelShift = ((shift * width) / 360) % width;
+    this.meshes[0].position.x = pixelShift > 0 ? pixelShift - width : pixelShift;
+    this.meshes[1].position.x = this.meshes[0].position.x + width;
+  }
   public reload() {
     this.load();
   }

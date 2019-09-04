@@ -180,28 +180,43 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
   }
 
   set orientation(orientation: Orientation) {
+    if(this.cameraOrientation === orientation) {
+        return;
+    }
+
     this.cameraOrientation = orientation;
     switch(this.cameraOrientation) {
         case 'floor':
-            this.CAMERA_PITCH_MAX = Math.PI*1/8;
-            this.CAMERA_PITCH_MIN = (Math.PI/2)*7/8;
+            this.CAMERA_PITCH_MIN = 0;
+            this.CAMERA_PITCH_MAX = Math.PI/2;
+            this.CAMERA_YAW_MIN = 0;
+            this.CAMERA_YAW_MAX = 2*Math.PI;
+
+            this.pitch = Math.PI / 4;
+            this.yaw = 0;
+            this.zoom = 0.5; 
             break;
         case 'ceiling':
-            this.CAMERA_PITCH_MAX = Math.PI*5/8;
-            this.CAMERA_PITCH_MIN = (Math.PI/2)*15/8;
+            this.CAMERA_PITCH_MIN = 0;
+            this.CAMERA_PITCH_MAX = Math.PI/2;
+            this.CAMERA_YAW_MIN = 0;
+            this.CAMERA_YAW_MAX = 2*Math.PI;
+
+            this.pitch = Math.PI / 4;
+            this.yaw = 0;
+            this.zoom = 0.5; 
             break;
         case 'wall':
-            this.CAMERA_PITCH_MAX = Math.PI*1/8;
-            this.CAMERA_PITCH_MIN = (Math.PI/2)*15/8;
-            this.CAMERA_YAW_MIN = Math.PI/2;
-            this.CAMERA_YAW_MAX = -1 * Math.PI/2;
+            this.CAMERA_PITCH_MIN = -1 * Math.PI/2;
+            this.CAMERA_PITCH_MAX = Math.PI/2;
+            this.CAMERA_YAW_MIN = -1 * Math.PI/2;
+            this.CAMERA_YAW_MAX = Math.PI/2;
+
+            this.pitch = 0;
+            this.yaw = 0;
+            this.zoom = 0.5; 
             break;
     }
-
-    if(this.pitch < this.CAMERA_PITCH_MAX){ this.pitch = this.CAMERA_PITCH_MAX; }
-    if(this.pitch > this.CAMERA_PITCH_MIN){ this.pitch = this.CAMERA_PITCH_MIN; }
-    if(this.yaw < this.CAMERA_YAW_MAX){ this.yaw = this.CAMERA_YAW_MAX; }
-    if(this.yaw > this.CAMERA_YAW_MIN){ this.yaw = this.CAMERA_YAW_MIN; }
 
     if(this.meshes !== undefined && this.meshes.length > 0) {
         if (this.orientation === 'wall') {
@@ -212,20 +227,75 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     }
   }
 
+  public getViewLimits(): Object {
+      return {
+          pitch: {
+              min: this.CAMERA_PITCH_MIN,
+              max: this.CAMERA_PITCH_MAX
+          },
+          yaw: {
+              min: this.CAMERA_YAW_MIN,
+              max: this.CAMERA_YAW_MAX
+          }
+      };
+  }
+
+  public getViewLimitsDegrees(): Object {
+      return {
+          pitch: {
+              min: toDeg(this.CAMERA_PITCH_MIN),
+              max: toDeg(this.CAMERA_PITCH_MAX)
+          },
+          yaw: {
+              min: toDeg(this.CAMERA_YAW_MIN),
+              max: toDeg(this.CAMERA_YAW_MAX)
+          }
+      };
+  }
+
   get orientation(): Orientation {
     return this.cameraOrientation;
   }
 
-  set pitch(pitch: Radian){
-        if (this.local !== undefined) {
-            this.local.rotation.x = -pitch;
-        }
+  set pitchDegrees(pitch: number) {
+    this.pitch = toRad(pitch);
+  }
+
+  get pitchDegrees(): number {
+      return toDeg(this.pitch);
+  }
+
+  set pitch(pitch: Radian) {
+      if (this.local !== undefined) {
+          if(this.orientation === 'ceiling') {
+              this.local.rotation.x = Math.PI + pitch;
+          } else if(this.orientation === 'wall') {
+              this.local.rotation.x = -1*Math.PI/2 - pitch;
+          } else {
+              this.local.rotation.x = -1*pitch;
+          }
+      }
   }
   get pitch(): Radian {
-        if (this.local === undefined) { return 0 });
-        return -this.local.rotation.x;
+      if (this.local === undefined) { return 0 });
+      if(this.orientation === 'ceiling') {
+        return (this.local.rotation.x - Math.PI);
+      } else if(this.orientation === 'wall') {
+          return (-1*Math.PI/2 - this.local.rotation.x);
+      } else {
+          return -1*this.local.rotation.x;
+      }
   }
   private _yaw: Radian;
+
+  set yawDegrees(yaw: number) {
+    this.yaw = toRad(yaw);
+  }
+
+  get yawDegrees(): number {
+      return toDeg(this.yaw);
+  }
+
   set yaw(yaw: Radian){
     if(this.meshes === undefined || this.meshes.length === 0){ return; }
     if(this.sep_mode){
@@ -263,6 +333,18 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     return {pitch, yaw};
   }
 
+  set cameraPoseDegrees({pitch, yaw}: DirectionOfView) {
+    const {camera, local} = this;
+    this.pitchDegrees = pitch;
+    this.yawDegrees = yaw;
+  }
+  get cameraPoseDegrees(): DirectionOfView {
+    const {camera, local} = this;
+    const pitch = this.pitchDegrees;
+    const yaw = this.yawDegrees;
+    return {pitch, yaw};
+  }
+
   set zoom(scale: number) {
         this.camera.zoom = scale;
         this.camera.updateProjectionMatrix();
@@ -275,10 +357,6 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     this.meshes.forEach((mesh)=>{
         mesh.scale.set(x, y, z);
     });
-  }
-
-  public setOrientation(orientation: Orientation): void {
-    this.orientation = orientation;
   }
 
   /**
@@ -370,11 +448,13 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     const {width, height} = this.canvasSize;
     // Normalize the acquired screen coordinates to -1 to 1 (the coordinates are represented by WebGL from -1 to 1)
     var mouseX =  (offsetX/width)  * 2 - 1;
+    var mouseY = -(offsetY/height) * 2 + 1;
 
-    if (this.orientation !== 'wall' && this.pitch > Math.PI/2 ) {
-        mouseX *= -1; // invert X for ceiling mode
+    if(this.orientation === 'ceiling') {
+        mouseX *= -1;
+        mouseY *= -1;
     }
-    const mouseY = -(offsetY/height) * 2 + 1;
+
     const pos = new THREE.Vector3(mouseX, mouseY, 1);
     const {camera, collisionSphere} = this;
     // Since pos is a screen coordinate system, convert it to the coordinate system of the object
@@ -395,12 +475,12 @@ export class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera> {
     const {pitch, yaw} = this;
     let   _pitch = pitch - (curr.pitch - this.prevEuler.pitch);
     let _yaw   = yaw   - (curr.yaw - this.prevEuler.yaw);
-    if(_pitch < this.CAMERA_PITCH_MAX){ _pitch = this.CAMERA_PITCH_MAX; }
-    if(_pitch > this.CAMERA_PITCH_MIN){ _pitch = this.CAMERA_PITCH_MIN; }
+    if(_pitch > this.CAMERA_PITCH_MAX){ _pitch = this.CAMERA_PITCH_MAX; }
+    if(_pitch < this.CAMERA_PITCH_MIN){ _pitch = this.CAMERA_PITCH_MIN; }
 
     if (this.orientation === 'wall') {
-        if(_yaw < this.CAMERA_YAW_MAX){ _yaw = this.CAMERA_YAW_MAX; }
-        if(_yaw > this.CAMERA_YAW_MIN){ _yaw = this.CAMERA_YAW_MIN; }
+        if(_yaw > this.CAMERA_YAW_MAX){ _yaw = this.CAMERA_YAW_MAX; }
+        if(_yaw < this.CAMERA_YAW_MIN){ _yaw = this.CAMERA_YAW_MIN; }
     }
 
     this.pitch = _pitch;
@@ -434,6 +514,10 @@ function toEuler(ptr: THREE.Vector3, l: number): {pitch: Radian, yaw: Radian}{
 
 function toDeg(radians: number) {
   return radians * 180 / Math.PI;
+}
+
+function toRad(degrees: number) {
+    return degrees * Math.PI / 180;
 }
 
 /**

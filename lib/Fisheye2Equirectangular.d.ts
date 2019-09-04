@@ -20,6 +20,7 @@ export declare class Fisheye2Equirectangular extends Fisheye<THREE.OrthographicC
     setOrientation(orientation: Orientation): void;
     orientation: Orientation;
     shift: number;
+    shiftDegrees: number;
     reload(): void;
     drag(type: "start" | "move", offsetX: number, offsetY: number): void;
 }

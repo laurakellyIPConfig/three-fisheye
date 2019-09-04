@@ -77,13 +77,17 @@ export declare class Fisheye2Perspective extends Fisheye<THREE.PerspectiveCamera
      */
     render(): void;
     orientation: Orientation;
+    getViewLimits(): Object;
+    getViewLimitsDegrees(): Object;
+    pitchDegrees: number;
     pitch: Radian;
     private _yaw;
+    yawDegrees: number;
     yaw: Radian;
     cameraPose: DirectionOfView;
+    cameraPoseDegrees: DirectionOfView;
     zoom: number;
     setSphereScale(x: number, y: number, z: number): void;
-    setOrientation(orientation: Orientation): void;
     /**
      * Screen information
      */
