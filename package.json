@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/legokichi/threejs-fisheye#readme",
   "dependencies": {
-    "three": "^0.83.0",
+    "three": "^0.162.0",
     "three-orbit-controls": "^82.1.0"
   },
   "devDependencies": {
