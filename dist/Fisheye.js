@@ -3595,7 +3595,7 @@
               this.minFilter =
                 minFilter !== undefined ? minFilter : LinearMipMapLinearFilter;
 
-              this.anisotropy = anisotropy !== undefined ? anisotropy : 1;
+              this.anisotropy = anisotropy !== undefined ? anisotropy : 16;
 
               this.format = format !== undefined ? format : RGBAFormat;
               this.type = type !== undefined ? type : UnsignedByteType;
@@ -19655,7 +19655,6 @@
               ) {
                 var extension;
 
-                console.log(textureType, texture, isPowerOfTwoImage);
                 if (isPowerOfTwoImage) {
                   _gl.texParameteri(
                     textureType,
@@ -19715,12 +19714,10 @@
                     texture.minFilter !== NearestFilter &&
                     texture.minFilter !== LinearFilter
                   ) {
-                    console.log(
+                    console.warn(
                       "THREE.WebGLRenderer: Texture is not power of two. Texture.minFilter should be set to THREE.NearestFilter or THREE.LinearFilter.",
                       texture
                     );
-                    console.log("should we update this,", texture.minFilter);
-                    // texture.minFilter = LinearFilter;
                   }
                 }
 
