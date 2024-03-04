@@ -2978,10 +2978,10 @@
               ClampToEdgeWrapping: ClampToEdgeWrapping,
               MirroredRepeatWrapping: MirroredRepeatWrapping,
             };
-            var NearestFilter = 1003;
+            var NearestFilter = THREE.NearestFilter;
             var NearestMipMapNearestFilter = 1004;
             var NearestMipMapLinearFilter = 1005;
-            var LinearFilter = 1006;
+            var LinearFilter = THREE.LinearFilter;
             var LinearMipMapNearestFilter = 1007;
             var LinearMipMapLinearFilter = 1008;
             var TextureFilter = {
