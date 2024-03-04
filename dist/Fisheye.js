@@ -2978,10 +2978,10 @@
               ClampToEdgeWrapping: ClampToEdgeWrapping,
               MirroredRepeatWrapping: MirroredRepeatWrapping,
             };
-            var NearestFilter = THREE.NearestFilter;
+            var NearestFilter = 1003;
             var NearestMipMapNearestFilter = 1004;
             var NearestMipMapLinearFilter = 1005;
-            var LinearFilter = THREE.LinearFilter;
+            var LinearFilter = 1006;
             var LinearMipMapNearestFilter = 1007;
             var LinearMipMapLinearFilter = 1008;
             var TextureFilter = {
@@ -3593,7 +3593,7 @@
               this.magFilter =
                 magFilter !== undefined ? magFilter : LinearFilter;
               this.minFilter =
-                minFilter !== undefined ? minFilter : LinearMipMapLinearFilter;
+                minFilter !== undefined ? minFilter : THREE.LinearFilter;
 
               this.anisotropy = anisotropy !== undefined ? anisotropy : 1;
 
@@ -8386,7 +8386,7 @@
               this.magFilter =
                 magFilter !== undefined ? magFilter : NearestFilter;
               this.minFilter =
-                minFilter !== undefined ? minFilter : NearestFilter;
+                minFilter !== undefined ? minFilter : THREE.NearestFilter;
 
               this.generateMipmaps = false;
               this.flipY = false;
