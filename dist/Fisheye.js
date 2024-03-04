@@ -3603,7 +3603,7 @@
               this.offset = new Vector2(0, 0);
               this.repeat = new Vector2(1, 1);
 
-              this.generateMipmaps = true;
+              this.generateMipmaps = false;
               this.premultiplyAlpha = false;
               this.flipY = true;
               this.unpackAlignment = 4; // valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
@@ -3655,7 +3655,7 @@
                 this.offset.copy(source.offset);
                 this.repeat.copy(source.repeat);
 
-                this.generateMipmaps = source.generateMipmaps;
+                this.generateMipmaps = false;
                 this.premultiplyAlpha = source.premultiplyAlpha;
                 this.flipY = source.flipY;
                 this.unpackAlignment = source.unpackAlignment;
