@@ -3593,7 +3593,7 @@
               this.magFilter =
                 magFilter !== undefined ? magFilter : LinearFilter;
               this.minFilter =
-                minFilter !== undefined ? minFilter : THREE.LinearFilter;
+                minFilter !== undefined ? minFilter : LinearMipMapLinearFilter;
 
               this.anisotropy = anisotropy !== undefined ? anisotropy : 1;
 
@@ -8386,7 +8386,7 @@
               this.magFilter =
                 magFilter !== undefined ? magFilter : NearestFilter;
               this.minFilter =
-                minFilter !== undefined ? minFilter : THREE.NearestFilter;
+                minFilter !== undefined ? minFilter : NearestFilter;
 
               this.generateMipmaps = false;
               this.flipY = false;
