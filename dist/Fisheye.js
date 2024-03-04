@@ -19655,6 +19655,7 @@
               ) {
                 var extension;
 
+                console.log(textureType, texture, isPowerOfTwoImage);
                 if (isPowerOfTwoImage) {
                   _gl.texParameteri(
                     textureType,
@@ -19714,10 +19715,12 @@
                     texture.minFilter !== NearestFilter &&
                     texture.minFilter !== LinearFilter
                   ) {
-                    console.warn(
+                    console.log(
                       "THREE.WebGLRenderer: Texture is not power of two. Texture.minFilter should be set to THREE.NearestFilter or THREE.LinearFilter.",
                       texture
                     );
+                    console.log("should we update this,", texture.minFilter);
+                    // texture.minFilter = LinearFilter;
                   }
                 }
 
