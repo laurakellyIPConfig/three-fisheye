@@ -434,12 +434,11 @@
                 }
                 var size = Math.min(width, height);
                 if (this.defaultExponent == null) {
-                  for (var i = 0; size >= Math.pow(2, i); i++) {} // Gain 2 ^ n size
+                  for (var i = 0; size > Math.pow(2, i); i++) {} // Gain 2 ^ n size
                   this.exponent = i; // Target resolution
                 } else {
                   this.exponent = this.defaultExponent;
                 }
-                console.log("exponent", this.exponent);
                 this.updateFisheyeRegion();
               };
               /**
@@ -484,7 +483,6 @@
                 // The size of 2 ^ n contracted extensions
                 this.texctx.canvas.width = pow;
                 this.texctx.canvas.height = pow;
-                console.log(this.texctx);
               };
               return Fisheye;
             })();
