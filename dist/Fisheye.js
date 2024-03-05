@@ -422,6 +422,7 @@
                * Fit texture to size of cam.src
                */
               Fisheye.prototype.resize = function () {
+                console.log(this.source);
                 var source = this.source;
                 if (source == null) {
                   return;
@@ -436,10 +437,10 @@
                 if (this.defaultExponent == null) {
                   for (var i = 0; size > Math.pow(2, i); i++) {} // Gain 2 ^ n size
                   this.exponent = i; // Target resolution
-                  console.log(this.exponent)
                 } else {
                   this.exponent = this.defaultExponent;
                 }
+                console.log("exponent", this.exponent, "size", size);
                 this.updateFisheyeRegion();
               };
               /**
@@ -35854,7 +35855,7 @@
                         ? divisions * curve.points.length
                         : divisions;
 
-                      console.log('resolution from curves', resolution)
+                    console.log("resolution from curves", resolution);
                     var pts = curve.getPoints(resolution);
                     for (var j = 0; j < pts.length; j++) {
                       var point = pts[j];
